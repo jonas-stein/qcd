@@ -1,0 +1,17 @@
+text.latex.preamble: \usepackage{helvet} \usepackage{sansmath} \sansmath
+image.origin: lower
+image.interpolation: nearest
+image.cmap: gray
+axes.grid: False
+savefig.dpi: 600
+axes.labelsize: 3
+axes.titlesize: 3
+font.size: 4
+legend.fontsize: 8
+xtick.labelsize: 3.5
+ytick.labelsize: 3
+text.usetex: True
+figure.figsize: 4.5, 1
+font.sans-serif: Arial
+font.family: sans-serif
+figure.autolayout: True
