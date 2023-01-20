@@ -6,6 +6,7 @@ import copy
 import math
 import os
 import plotting
+from sklearn.metrics import r2_score
 path = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -295,7 +296,7 @@ def separation_node_set_deviation(amount_of_graphs=50, iterations=50, save_seeds
         _ = plotting.create_plot_csv_file(type, deviation, labels)
 
 
-def prediction_deviation(amount_of_graphs=50, iterations=50, save_seeds=True, save_plot_to_csv=True):
+def prediction_deviation(amount_of_graphs=50, save_seeds=True, save_plot_to_csv=True):
     """
     Creates a plot that compares the prediction for nodes/edges to whether they are actually separating
     (0 is random guessing and 1 would always be correct)
@@ -304,8 +305,6 @@ def prediction_deviation(amount_of_graphs=50, iterations=50, save_seeds=True, sa
     ----------
     amount_of_graphs : int
         Amount of graphs analyzed for each tier.
-    iterations : int
-        The number of simulated annealing iterations.
     save_seeds : bool
         Determines whether the seeds and the results should get saved into an extra file.
     save_plot_to_csv : bool
@@ -315,8 +314,8 @@ def prediction_deviation(amount_of_graphs=50, iterations=50, save_seeds=True, sa
     -------
     NOTHING
     """
+
     save_plot = True
-    node_deviation = [[], [], []]
     edge_deviation = [[], [], []]
     deviation = [[], [], []]
     labels = ["easy", "medium", "hard"]
@@ -331,55 +330,36 @@ def prediction_deviation(amount_of_graphs=50, iterations=50, save_seeds=True, sa
     for label in labels:
 
         if not (seedfile is None):
-            plotting.write_seed_file(seedfile, label, ["node pred dev", "edge pred dev", "# of sep nodes", "deviation"])
+            plotting.write_seed_file(seedfile, label, ["edge pred dev"])
 
         for j in range(amount_of_graphs):
 
-            print("Analysing " + label + " graph number " + str(j + 1) + ":\n")
+            print("Analyzing " + label + " graph number " + str(j + 1) + ":\n")
+            print("Deviation: \n" + str(deviation[i]) + "\n")
 
             G = graphs.create_lfr_graph(label, seedfile)
 
-            separation_nodes_gt, separation_edges_gt = get_all_separation_nodes_edges_lfr(G)
+            separation_nodes_gt, separation_edges_gt = graphs.get_all_separation_nodes_edges_lfr(G)
 
-            node_classification = nC.run_separation_node_classification(G, d=2, a=0.5, iterations=iterations,
-                                                                        draw=False)
-            communities = nC.greedy_separation_node_classification(G, node_classification)
-            node_assignments = graphs.assign_nodes_to_coms(G, communities)
+            nc_values = []
+            gt_values = []
+            for (k, l) in G.edges():
+                node_layer_depth, nodes_in_layers, edges_in_layers, edge_layer_depth, sub_tree_root = nC.bfs(G, k, l)
+                edge_nc, nc = nC.neighborhood_connectivity(G, k, l, edges_in_layers, sub_tree_root, nodes_in_layers,
+                                                           a=0.5)
+                nc_values.append(nc)
+                if (k, l) in separation_edges_gt or (l, k) in separation_edges_gt:
+                    gt_values.append(0)
+                else:
+                    gt_values.append(1)
 
-            separation_nodes = [i for i in node_classification.keys() if node_classification[i] == 0]
-
-            print("\nSeparation nodes found: " + str(separation_nodes))
-            print("Separation nodes Truth: " + str(separation_nodes_gt) + "\n")
-            print(node_assignments)
-
-            correct_edge_predictions = 0
-            correct_node_predictions = 0
-            separation_edges_found = []
-            for node in separation_nodes:
-                for neighbor in G.neighbors(node):
-                    if node_assignments[node] != node_assignments[neighbor] and (
-                            ((node, neighbor) in separation_edges_gt) or ((neighbor, node) in separation_edges_gt)):
-                        if (node, neighbor) not in separation_edges_found:
-                            separation_edges_found.append((node, neighbor))
-                            separation_edges_found.append((neighbor, node))
-                            # print(str((node,neighbor)) + "is a seperation edge.")
-                            correct_edge_predictions += 1
-
-                if node in separation_nodes_gt:
-                    correct_node_predictions += 1
-
-            node_deviation[i].append(correct_node_predictions / len(separation_nodes))
-            edge_deviation[i].append(correct_edge_predictions / len(separation_nodes))
-            deviation[i].append((node_deviation[i][j] + edge_deviation[i][j]) / 2)
-
-            print("Deviation: \n" + str(deviation[i]) + "\n")
+            edge_deviation[i].append(r2_score(gt_values, nc_values))
+            deviation[i].append(edge_deviation[i][j])
 
             # save results to seeds file
             if not (seedfile is None):
                 with open(seedfile, "a") as f:
-                    f.write(
-                        f"{str(node_deviation[i][j]):20}{str(edge_deviation[i][j]):20}"
-                        f"{str(len(separation_nodes)):20}{str(deviation[i][j]):20}\n")
+                    f.write(f"{str(edge_deviation[i][j]):20}\n")
 
         i += 1
 
@@ -387,7 +367,7 @@ def prediction_deviation(amount_of_graphs=50, iterations=50, save_seeds=True, sa
 
     # save_plot_to_csv check
     if save_plot_to_csv:
-        _ = plotting.create_plot_csv_file(type, deviation, labels)
+        plotting.create_plot_csv_file(type, deviation, labels)
 
 
 def check_surjective_and_injective_correctness(amount_of_graphs=50, iterations=50, save_seeds=True):

@@ -467,3 +467,38 @@ def find_constraint_violations(G, x: list):
             intersection_sizes.pop()
             injectivity_violations += sum(intersection_sizes)
     return separation_set_constraint_violations, injectivity_violations, surjectivity_violations
+
+
+def get_all_separation_nodes_edges_lfr(G):
+    """
+    Gets every separation node and edge from an lfr graph with ground truth.
+
+    Parameters
+    ----------
+    G : networkx.classes.graph.Graph
+        The graph to be analysed. Has to be an lfr graph with ground truth.
+
+    Returns
+    -------
+    separation_nodes : list
+        A list of all the separation nodes in the graph.
+    separation_edges : list
+        A list of all the separation edges in the graph.
+    """
+
+    com_index_gt = assign_com_index_ground_truth(G)
+
+    separation_nodes = []
+    separation_edges = []
+
+    for (i, j) in G.edges:
+        if com_index_gt[i] != com_index_gt[j]:
+
+            separation_edges.append((i, j))
+
+            if i not in separation_nodes:
+                separation_nodes.append(i)
+            if j not in separation_nodes:
+                separation_nodes.append(j)
+
+    return separation_nodes, separation_edges
