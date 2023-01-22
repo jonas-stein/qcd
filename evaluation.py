@@ -509,9 +509,9 @@ def intra_probability_SBM_plots(amount_of_graphs=50, simulated_annealing_iterati
                 # nmi score
                 node_assignments = {u: None for u in G.nodes()}
                 for u in G.nodes():
-                    for j, l in communities.items():  # TODO @Domi check j (already defined in outer for loop)
+                    for c, l in communities.items():
                         if u in l:
-                            node_assignments[u] = j
+                            node_assignments[u] = c
 
                 nmi_score.append(normalized_mutual_info_score(list(node_assignments.values()),
                                                               list(nx.get_node_attributes(G, "block").values())))
