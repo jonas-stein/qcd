@@ -138,12 +138,12 @@ def combine_box_plots(plots: list, save_plot=False):
                                    markeredgewidth=line_width, markeredgecolor='red')
                    )
 
-        for i in range(len(results)):  # TODO @Domi check i (already defined in outer for loop)
-            dataset_points = results[i]
-            ax.scatter(np.full_like(dataset_points, i + 1), dataset_points, marker='o', color='w', edgecolors='k',
+        for j in range(len(results)):
+            dataset_points = results[j]
+            ax.scatter(np.full_like(dataset_points, j + 1), dataset_points, marker='o', color='w', edgecolors='k',
                        linewidth=line_width, s=marker_size)
-            if i == len(results) - 1:
-                ax2.scatter(np.full_like(dataset_points, i + 1), dataset_points, marker='o', color='w', edgecolors='k',
+            if j == len(results) - 1:
+                ax2.scatter(np.full_like(dataset_points, j + 1), dataset_points, marker='o', color='w', edgecolors='k',
                             linewidth=line_width, s=marker_size)
 
         ax.set_xlabel(type, fontsize=5.5)
